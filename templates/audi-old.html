@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywna Deska Rozdzielcza</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Audi';
+            src: url('/static/fonts/AudiType-ExtendedBold_4.03.woff2') format('woff2'),
+                url('/static/fonts/AudiType-ExtendedBold_4.03.woff') format('woff');
+        }
+
+        @font-face {
+            font-family: 'AudiWideNormal';
+            src: url('/static/fonts/AudiType-WideNormal_4.03.woff2') format('woff2'),
+                url('/static/fonts/AudiType-WideNormald_4.03.woff') format('woff');
+        }
+
+        body {
+            background-color: black;
+            color: white;
+            font-family: "Audi", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            position: relative;
+            background: url('{{ url_for("static", filename="new.png") }}') no-repeat center center;
+            background-size: cover;
+            width: 1920px;
+            height: 984px;
+            display: flex;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            /* border: 1px solid #ED1E82; */
+            border-radius: 50%;
+        }
+
+        #chargeNeedle {
+            left: 130px;
+            top: 252px;
+        }
+
+        #speedNeedle {
+            right: 154px;
+            top: 254px;
+        }
+
+        #powerNeedle {
+            left: 806px;
+            top: 683px;
+        }
+
+        #rpmNeedle {
+            left: 55vw;
+            /* Pozycja dla mniejszego zegara x1000 RPM */
+            top: 70vh;
+        }
+
+        .controls {
+            position: absolute;
+            top: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        label {
+            width: 100px;
+        }
+
+        input[type="range"] {
+            width: 200px;
+        }
+
+        .components>.speed {
+            position: absolute;
+            top: 480px;
+            right: 292px;
+            z-index: 1;
+            text-align: center;
+            width: 300px;
+        }
+
+        .components>.gear {
+            position: absolute;
+            top: 480px;
+            left: 267px;
+            z-index: 1;
+            text-align: center;
+            width: 300px;
+        }
+
+        .heading {
+            position: absolute;
+            top: 322px;
+            left: 723px;
+            z-index: 1;
+            width: 350px;
+        }
+
+        .components>.tires {
+            position: absolute;
+            top: 424px;
+            left: 723px;
+            z-index: 1;
+            width: 350px;
+            display: grid;
+            justify-items: left;
+            grid-template-columns: repeat(4, auto);
+            gap: 24px;
+            font-size: 2rem;
+
+            .col {
+                display: grid;
+                grid-template-columns: 1fr;
+                justify-items: left;
+            }
+
+            label {
+                font-size: 1rem;
+                text-transform: uppercase;
+                color: #8D99B3;
+            }
+        }
+
+        .components>.trip {
+            position: absolute;
+            top: 786px;
+            left: 723px;
+            z-index: 1;
+            width: 450px;
+            display: grid;
+            justify-items: left;
+            grid-template-columns: repeat(2, auto);
+            gap: 24px;
+            font-size: 1.5rem;
+            justify-content: space-around;
+
+            .col {
+                display: grid;
+                grid-template-columns: 1fr;
+                justify-items: left;
+            }
+
+            label {
+                font-size: 1rem;
+                text-transform: uppercase;
+                color: #8D99B3;
+            }
+        }
+
+        .components>.bar {
+            font-family: 'AudiWideNormal', sans-serif;
+            position: absolute;
+            top: 197px;
+            left: 645px;
+            padding: 14px 15px;
+            z-index: 1;
+            width: 576px;
+            display: flex;
+            gap: 24px;
+            font-size: 1.5rem;
+            font-weight: 300;
+            height: auto;
+            justify-content: space-between;
+
+            .col {
+                display: flex;
+                flex-direction: row;
+                gap: 5px;
+                align-items: center;
+            }
+
+            .range::before {
+                position: absolute;
+                top: 1px;
+                left: 139px;
+                content: '';
+                background-image: url(/static/lines.svg);
+                height: 54px;
+                width: 2px;
+            }
+
+            .signal::after {
+                position: absolute;
+                top: 1px;
+                left: 431px;
+                content: '';
+                background-image: url(/static/lines.svg);
+                height: 54px;
+                width: 2px;
+            }
+
+            .signal::before {
+                position: absolute;
+                top: 1px;
+                left: 514px;
+                content: '';
+                background-image: url(/static/lines.svg);
+                height: 54px;
+                width: 2px;
+            }
+        }
+
+        .components>.infos {
+            position: absolute;
+            top: 553px;
+            left: 780px;
+            z-index: 1;
+            width: 350px;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 24px;
+            justify-items: left;
+            justify-content: space-around;
+
+            .col {
+                display: grid;
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto;
+            }
+
+            .col strong {
+                font-size: 1rem;
+                margin: 0;
+                padding: 0;
+                color: #8D99B3;
+            }
+
+            .col span {
+                font-size: 1rem;
+                margin-top: 6px;
+            }
+        }
+
+        .components h1 {
+            font-size: 5rem;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <div class="components">
+            <div class="bar">
+                <div class="range col">
+                    <img src="/static/1.svg" width="22px" height="22px" alt="">
+                    <span>120 <small>km</small></span>
+                </div>
+                <div class="music col" style="margin-right: 20px;">
+                    <img src="/static/4.svg" width="22px" height="22px" alt="">
+                    <span>Not connected</span>
+                </div>
+                <div class="signal col">
+                    <img src="/static/3.svg" width="22px" height="22px" alt="">
+                </div>
+                <div class="nav col" style="margin-right: 28px;">
+                    <img src="/static/2.svg" width="22px" height="22px" alt="">
+                </div>
+            </div>
+            <div class="heading">
+                <h3>Hello! Brylant</h3>
+            </div>
+            <div class="tires">
+                <div class="col"><label>PP</label><span id="tire-fr">{{ telemetry.TireTempFR | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>LP</label><span id="tire-fl">{{ telemetry.TireTempFL | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>PT</label><span id="tire-rr">{{ telemetry.TireTempRR | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>LT</label><span id="tire-rl">{{ telemetry.TireTempRL | default(0)
+                        }}°C</span></div>
+            </div>
+            <div class="trip">
+                <div class="col">1019 km</div>
+                <div class="col">20.1 km</div>
+                <div class="col">11:07</div>
+                <div class="col">+29.0 °C</div>
+            </div>
+            <div class="speed">
+                <h1 id="key-speed">{{ telemetry.Speed | default(0) }}</h1>
+                <h3 style="margin-top: 67px;">KM/H</h3>
+            </div>
+            <div class="gear">
+                <h1 id="key-gear">
+                    <span class="drive-modes">
+                        {% if drive_mode == 1 %}'E'{% elif drive_mode == 2 %}'D'{% elif drive_mode == 3 %}'S'{% elif
+                        drive_mode == 4
+                        %}'M'{% endif %}
+                    </span>
+                    {% if telemetry.Gear == -1 %}'R'{% else %}{{ telemetry.Gear | default(0) }}{% endif %}
+                </h1>
+                <h3 style="margin-top: 67px;">INDIVIDUAL</h3>
+            </div>
+            <div class="infos">
+                <div class="col"><strong>MODE:</strong><span id="key-drive-mode">
+                        {% if drive_mode == 1 %}ECO{% elif drive_mode == 2 %}NORMAL{% elif drive_mode == 3 %}SPORT{%
+                        elif
+                        drive_mode == 4 %}MANUAL{%
+                        else %}D{% endif %}
+                    </span></div>
+                <div class="col"><strong>DOWN:</strong><span id="key-shift-down">{{
+                        car_settings[current_car_id][drive_mode].shift_down }}</span></div>
+                <div class="col"><strong>DCD:</strong><span id="key-shift-down-cooldown">{{
+                        car_settings[current_car_id][drive_mode].shift_down_cooldown }}</span></div>
+                <div class="col"><strong>UP:</strong><span id="key-shift-up">{{
+                        car_settings[current_car_id][drive_mode].shift_up }}</span></div>
+                <div class="col"><strong>UPCD:</strong><span id="key-shift-up-cooldown">{{
+                        car_settings[current_car_id][drive_mode].shift_up_cooldown }}</span></div>
+                <div class="col"><strong>Car ID:</strong><span id="current-car-id">{{ current_car_id }}</span></div>
+            </div>
+        </div>
+        <canvas id="chargeNeedle" width="575" height="575"></canvas>
+        <canvas id="speedNeedle" width="575" height="575"></canvas>
+    </div>
+
+    <script>
+        let chargeNeedleConfig = {
+            lineWidth: 8,          // Grubość strzałki
+            needleLength: 180,     // Stała długość strzałki w pikselach
+            needleOffset: 111,
+            offsetX: 0,            // Przesunięcie w poziomie
+            offsetY: 0,            // Przesunięcie w pionie
+            gradientStartColor: "#FF0000",
+            gradientEndColor: "#130000",
+            shadowBlur: 8,         // Rozmycie cienia
+            shadowColor: "rgba(0, 0, 0, 1)", // Kolor cienia
+            shadowOffsetX: 5,      // Przesunięcie cienia w poziomie
+            shadowOffsetY: 5       // Przesunięcie cienia w pionie
+        };
+
+        let speedNeedleConfig = {
+            lineWidth: 8,          // Grubość strzałki
+            needleLength: 180,     // Stała długość strzałki w pikselach
+            needleOffset: 111,
+            offsetX: 0,            // Przesunięcie w poziomie
+            offsetY: 0,            // Przesunięcie w pionie
+            gradientStartColor: "#FF0000",
+            gradientEndColor: "#130000",
+            shadowBlur: 8,
+            shadowColor: "rgba(0, 0, 0, 1)",
+            shadowOffsetX: 5,
+            shadowOffsetY: 5
+        };
+
+        function drawNeedle(canvasId, value, maxValue, config) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext("2d");
+            const width = canvas.width;
+            const height = canvas.height;
+            const centerX = width / 2 + config.offsetX;
+            const centerY = height / 2 + config.offsetY;
+            const needleLength = config.needleLength;
+            const needleOffset = config.needleOffset || 0;
+
+            ctx.clearRect(0, 0, width, height);
+
+            const startAngle = Math.PI * 0.8;
+            const angleRange = Math.PI * 1.4;
+            const angle = startAngle + (angleRange * (value / maxValue));
+
+            // 1. Rysowanie cienia (Z rotacją, tak jak wskazówka)
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(angle); // Rotacja dla cienia
+
+            ctx.beginPath();
+            ctx.moveTo(needleOffset, 0);
+            ctx.lineTo(needleOffset + needleLength * 0, -config.lineWidth * 1); // Szerszy kształt
+            ctx.lineTo(needleOffset + needleLength, 0);
+            ctx.lineTo(needleOffset + needleLength * 0, config.lineWidth * 1); // Szerszy kształt
+            ctx.closePath();
+
+            ctx.shadowBlur = config.shadowBlur;
+            ctx.shadowColor = config.shadowColor;
+            ctx.shadowOffsetX = config.shadowOffsetX;
+            ctx.shadowOffsetY = config.shadowOffsetY;
+            ctx.fillStyle = "rgba(0, 0, 0, 1)"; // Przezroczyste wypełnienie, tylko cień
+            ctx.fill();
+
+            // Wyłącz cień
+            ctx.shadowBlur = 0;
+            ctx.shadowOffsetX = 0;
+            ctx.shadowOffsetY = 0;
+
+            ctx.restore();
+
+            // 2. Rysowanie wskazówki (Z tą samą rotacją)
+            ctx.save();
+            ctx.translate(centerX, centerY);
+            ctx.rotate(angle); // Ta sama rotacja co dla cienia
+
+            const gradient = ctx.createRadialGradient(
+                needleOffset + needleLength / 1, 0, 0,
+                needleOffset + needleLength / 2, 0, needleLength
+            );
+            gradient.addColorStop(0, config.gradientStartColor);
+            gradient.addColorStop(1, config.gradientEndColor);
+
+            ctx.beginPath();
+            ctx.moveTo(needleOffset, 0);
+            ctx.lineTo(needleOffset + needleLength * 0.06, -config.lineWidth);
+            ctx.lineTo(needleOffset + needleLength, 0.9);
+            ctx.lineTo(needleOffset + needleLength * 0.06, config.lineWidth);
+            ctx.closePath();
+
+            ctx.fillStyle = gradient;
+            ctx.fill();
+
+            ctx.restore();
+        }
+
+        let lastTelemetry = null;
+        let currentChargeValue = 0;
+        let currentSpeedValue = 0;
+        let targetChargeValue = 0;
+        let targetSpeedValue = 0;
+        let chargeVelocity = 0;  // Prędkość wskazówki obrotomierza
+        let speedVelocity = 0;   // Prędkość wskazówki prędkościomierza
+        let lastTime = performance.now();
+        let lastDataTime = performance.now();
+
+        // Parametry sprężyny
+        const springStiffness = 100;  // Sztywność sprężyny (im wyższa, tym szybszy ruch)
+        const damping = 20;           // Tłumienie (im niższe, tym więcej drgań)
+
+        drawNeedle("chargeNeedle", currentChargeValue, 8000, chargeNeedleConfig);
+        drawNeedle("speedNeedle", currentSpeedValue, 320, speedNeedleConfig);
+
+        const socket = io('http://localhost:5000', {
+            pingInterval: 1000,
+            pingTimeout: 500
+        });
+
+        socket.on('connect', function () {
+            console.log('Connected to WebSocket');
+        });
+
+        socket.on('telemetry_update', function (data) {
+            const now = performance.now();
+            console.log(`WebSocket Telemetry - RPM: ${data.CurrentRPM}, Speed: ${data.Speed}, Time: ${now.toFixed(0)}`);
+
+            if (Object.keys(data).length > 0) {
+                lastTelemetry = data;
+                lastDataTime = now;
+
+                targetChargeValue = data.CurrentRPM || 0;
+                targetSpeedValue = data.Speed || 0;
+
+                document.getElementById("key-speed").textContent = Math.round(data.Speed || 0);
+                const gearPrefix = data.drive_mode === 1 ? 'E' : data.drive_mode === 2 ? 'D' : data.drive_mode === 3 ? 'S' : data.drive_mode === 4 ? 'M' : 'S';
+                const gearDisplay = data.Gear === -1 ? 'R' : data.Gear || 0;
+                document.getElementById("key-gear").innerHTML = `<span class="drive-modes">${gearPrefix}</span>${gearDisplay}`;
+                document.getElementById("tire-fl").textContent = `${Math.round(data.TireTempFL || 0)}°C`;
+                document.getElementById("tire-fr").textContent = `${Math.round(data.TireTempFR || 0)}°C`;
+                document.getElementById("tire-rl").textContent = `${Math.round(data.TireTempRL || 0)}°C`;
+                document.getElementById("tire-rr").textContent = `${Math.round(data.TireTempRR || 0)}°C`;
+                const driveModeLabel = data.drive_mode === 1 ? 'E' : data.drive_mode === 2 ? 'D' : data.drive_mode === 3 ? 'S' : data.drive_mode === 4 ? 'M' : 'D';
+                document.getElementById("key-drive-mode").textContent = driveModeLabel;
+                document.getElementById("key-shift-down").textContent = data.shift_down || 0;
+                document.getElementById("key-shift-down-cooldown").textContent = data.shift_down_cooldown || 0;
+                document.getElementById("key-shift-up").textContent = data.shift_up || 0;
+                document.getElementById("key-shift-up-cooldown").textContent = data.shift_up_cooldown || 0;
+                document.getElementById("current-car-id").textContent = data.current_car_id || 'N/A';
+            }
+        });
+
+        function animateNeedles(timestamp) {
+            const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);  // Czas w sekundach
+            lastTime = timestamp;
+
+            // Symulacja sprężyny dla obrotomierza
+            const chargeAcceleration = springStiffness * (targetChargeValue - currentChargeValue) - damping * chargeVelocity;
+            chargeVelocity += chargeAcceleration * deltaTime;
+            currentChargeValue += chargeVelocity * deltaTime;
+
+            // Symulacja sprężyny dla prędkościomierza
+            const speedAcceleration = springStiffness * (targetSpeedValue - currentSpeedValue) - damping * speedVelocity;
+            speedVelocity += speedAcceleration * deltaTime;
+            currentSpeedValue += speedVelocity * deltaTime;
+
+            // Rysowanie wskazówek
+            drawNeedle("chargeNeedle", currentChargeValue, lastTelemetry?.MaxRPM || 8000, chargeNeedleConfig);
+            drawNeedle("speedNeedle", currentSpeedValue, 320, speedNeedleConfig);
+
+            // Reset wartości, jeśli brak danych przez 1 sekundę
+            if (timestamp - lastDataTime > 1000) {
+                targetChargeValue = 0;
+                targetSpeedValue = 0;
+            }
+
+            requestAnimationFrame(animateNeedles);
+        }
+
+        requestAnimationFrame(animateNeedles);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,42 @@
+{
+    "test": {
+        "1": {
+            "shift_up": 3333,
+            "shift_down": 2222,
+            "shift_up_cooldown": 0.8,
+            "shift_down_cooldown": 0.3
+        },
+        "2": {
+            "shift_up": 3888,
+            "shift_down": 2555,
+            "shift_up_cooldown": 1.0,
+            "shift_down_cooldown": 0.2
+        },
+        "3": {
+            "shift_up": 7444,
+            "shift_down": 4444,
+            "shift_up_cooldown": 1.5,
+            "shift_down_cooldown": 0.0
+        }
+    },
+    "g82": {
+        "1": {
+            "shift_up": 3390,
+            "shift_down": 1450,
+            "shift_up_cooldown": 0.8,
+            "shift_down_cooldown": 0.8
+        },
+        "2": {
+            "shift_up": 3890,
+            "shift_down": 2360,
+            "shift_up_cooldown": 1.4,
+            "shift_down_cooldown": 0.8
+        },
+        "3": {
+            "shift_up": 7550,
+            "shift_down": 4559,
+            "shift_up_cooldown": 0.3,
+            "shift_down_cooldown": 0.3
+        }
+    }
+}

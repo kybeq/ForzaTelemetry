@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forza Horizon Telemetry</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <!-- Dodanie Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center mb-4">Forza Horizon Telemetry</h1>
+
+        <!-- Car ID Selection -->
+        <section class="text-center mb-4">
+            <div class="input-group w-50 mx-auto mb-2">
+                <input type="text" class="form-control" id="car-id" placeholder="Enter Car ID"
+                    value="{{ telemetry.CarPerformanceIndex if telemetry.CarPerformanceIndex is defined else '1' }}">
+            </div>
+            <p>Port: {{ telemetry.port }} - zmień port w grze na ten numer.</p>
+            <p>Current Car ID: <span id="current-car-id">{{ telemetry.CarPerformanceIndex if
+                    telemetry.CarPerformanceIndex is
+                    defined else '1' }}</span></p>
+        </section>
+
+        <!-- Drive Mode Selection -->
+        <section class="text-center mb-4">
+            <h3>Drive Mode</h3>
+            <div id="drive-modes">
+                <button class="btn btn-primary drive-mode-btn" data-mode="1">Eco (1)</button>
+                <button class="btn btn-primary drive-mode-btn" data-mode="2">Normal (2)</button>
+                <button class="btn btn-primary drive-mode-btn active-mode" data-mode="3">Sport (3)</button>
+            </div>
+        </section>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Key Telemetry Data -->
+            <div class="col-md-6">
+                <h3>Key Telemetry</h3>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div id="key-telemetry" class="row cols">
+                            <div class="col">
+                                <strong>Car Performance Index:</strong>
+                                <span id="key-car-performance-index" class="d-block fs-4">{{
+                                    telemetry.CarPerformanceIndex or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Current RPM:</strong>
+                                <span id="key-current-rpm" class="d-block fs-4">{{ telemetry.CurrentRPM or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>IdleRPM:</strong>
+                                <span id="key-idle-rpm" class="d-block fs-4">{{ telemetry.IdleRPM or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>MAX RPM:</strong>
+                                <span id="key-max-rpm" class="d-block fs-4">{{ telemetry.MaxRPM or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Speed:</strong>
+                                <span id="key-speed" class="d-block fs-4">{{ telemetry.Speed or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Gear:</strong>
+                                <span id="key-gear" class="d-block fs-4">{{ telemetry.Gear or '0' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Drive Mode:</strong>
+                                <span id="key-drive-mode" class="d-block fs-4">{{ telemetry.drive_mode or '2' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Shift Up RPM:</strong>
+                                <span id="key-shift-up" class="d-block fs-4">{{ telemetry.shift_up or '7000' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Shift Down RPM:</strong>
+                                <span id="key-shift-down" class="d-block fs-4">{{ telemetry.shift_down or '2500'
+                                    }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Shift Up Cooldown:</strong>
+                                <span id="key-shift-up-cooldown" class="d-block fs-4">{{ telemetry.shift_up_cooldown or
+                                    '1.5' }}</span>
+                            </div>
+                            <div class="col">
+                                <strong>Shift Down Cooldown:</strong>
+                                <span id="key-shift-down-cooldown" class="d-block fs-4">{{ telemetry.shift_down_cooldown
+                                    or '1.5' }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>Tire Temperature</h3>
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <canvas id="tire-temperature-chart" height="400"></canvas>
+                    </div>
+                </div>
+
+                <!-- Less Important Telemetry Data -->
+                <h3>Additional Telemetry</h3>
+                <div class="card">
+                    <div class="card-body">
+                        <table class="table telemetry-table">
+                            <tbody id="additional-telemetry"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RPM Settings and Presets -->
+            <div class="col-md-6">
+                <h3>RPM Settings</h3>
+                <form id="rpm-form" class="card p-3 mb-4">
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Shift Up RPM</span>
+                        <input type="number" class="form-control" id="shift-up" name="shift_up" min="0"
+                            value="{{ telemetry.shift_up or 7000 }}">
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Shift Down RPM</span>
+                        <input type="number" class="form-control" id="shift-down" name="shift_down" min="0"
+                            value="{{ telemetry.shift_down or 2500 }}">
+                    </div>
+                    <div class="input-group mb-2">
+                        <span class="input-group-text">Shift Up Cooldown (s)</span>
+                        <input type="number" class="form-control" id="shift-up-cooldown" name="shift_up_cooldown"
+                            step="0.1" min="0" value="{{ telemetry.shift_up_cooldown or 1.5 }}">
+                    </div>
+                    <div class="input-group mb-3">
+                        <span class="input-group-text">Shift Down Cooldown (s)</span>
+                        <input type="number" class="form-control" id="shift-down-cooldown" name="shift_down_cooldown"
+                            step="0.1" min="0" value="{{ telemetry.shift_down_cooldown or 1.5 }}">
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Update RPM Settings</button>
+                </form>
+
+                <h3>Presets</h3>
+                <div class="card p-3">
+                    <div class="input-group mb-2">
+                        <input type="text" class="form-control" id="preset-name" placeholder="Preset Name">
+                        <button class="btn btn-primary" id="save-preset">Save Preset</button>
+                    </div>
+                    <select class="form-select mb-2" id="preset-select">
+                        <option value="">Select Preset</option>
+                        {% for preset_name in presets.keys() %}
+                        <option value="{{ preset_name }}">{{ preset_name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-primary w-100" id="load-preset">Load Preset</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+
+</html>

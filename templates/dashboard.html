@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="pl">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktywna Deska Rozdzielcza</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400..900&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.js"></script>
+    <style>
+        body {
+            background-color: black;
+            color: white;
+            font-family: "Orbitron", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        .dashboard {
+            position: relative;
+            background: url('{{ url_for("static", filename="bgss.svg") }}') no-repeat center center;
+            background-size: cover;
+            min-width: 100vw;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+        }
+
+        canvas {
+            position: absolute;
+            border-radius: 50%;
+        }
+
+        #chargeNeedle {
+            left: 99px;
+            top: 230px;
+        }
+
+        #speedNeedle {
+            right: 99px;
+            top: 230px;
+        }
+
+        .components>.speed {
+            position: absolute;
+            top: 450px;
+            right: 245px;
+            z-index: 1;
+            text-align: center;
+            width: 300px;
+        }
+
+        .components>.gear {
+            position: absolute;
+            top: 450px;
+            left: 244px;
+            z-index: 1;
+            text-align: center;
+            width: 300px;
+        }
+
+        .components>.tires {
+            position: absolute;
+            top: 350px;
+            left: 38vw;
+            z-index: 1;
+            width: 450px;
+            display: grid;
+            justify-items: center;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            font-size: 2rem;
+        }
+
+        .components>.tires .col {
+            display: grid;
+            grid-template-columns: 1fr;
+            justify-items: left;
+        }
+
+        .components>.tires label {
+            font-size: 1rem;
+            text-transform: uppercase;
+        }
+
+        .components>.infos {
+            position: absolute;
+            top: 820px;
+            left: 20vw;
+            z-index: 1;
+            width: 1200px;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+        }
+
+        .components>.infos .col {
+            display: grid;
+            grid-template-columns: 1fr;
+            grid-template-rows: 1fr 1fr;
+        }
+
+        .components>.infos .col strong {
+            font-size: 1rem;
+        }
+
+        .components>.infos .col span {
+            font-size: 2rem;
+        }
+
+        .components h1 {
+            font-size: 5rem;
+            margin: 0;
+            padding: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="dashboard">
+        <div class="components">
+            <div class="tires">
+                <div class="col"><label>Prawy Przód</label><span id="tire-fr">{{ telemetry.TireTempFR | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>Lewy Przód</label><span id="tire-fl">{{ telemetry.TireTempFL | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>Prawy Tył</label><span id="tire-rr">{{ telemetry.TireTempRR | default(0)
+                        }}°C</span></div>
+                <div class="col"><label>Lewy Tył</label><span id="tire-rl">{{ telemetry.TireTempRL | default(0)
+                        }}°C</span></div>
+            </div>
+            <div class="speed">
+                <h1 id="key-speed">{{ telemetry.Speed | default(0) }}</h1>
+                <h4>KM/H</h4>
+            </div>
+            <div class="gear">
+                <h1 id="key-gear">
+                    <span class="drive-modes">
+                        {% if drive_mode == 1 %}'E'{% elif drive_mode == 2 %}'D'{% elif drive_mode == 3 %}'S'{% elif
+                        drive_mode == 4
+                        %}'M'{% endif %}
+                    </span>
+                    {% if telemetry.Gear == -1 %}'R'{% else %}{{ telemetry.Gear | default(0) }}{% endif %}
+                </h1>
+                <h4>GEAR</h4>
+            </div>
+            <div class="infos">
+                <div class="col"><strong>Drive Mode:</strong><span id="key-drive-mode">{{ drive_mode }}</span></div>
+                <div class="col"><strong>Down RPM:</strong><span id="key-shift-down">{{
+                        car_settings[current_car_id][drive_mode].shift_down }}</span></div>
+                <div class="col"><strong>Down Cooldown:</strong><span id="key-shift-down-cooldown">{{
+                        car_settings[current_car_id][drive_mode].shift_down_cooldown }}</span></div>
+                <div class="col"><strong>Up RPM:</strong><span id="key-shift-up">{{
+                        car_settings[current_car_id][drive_mode].shift_up }}</span></div>
+                <div class="col"><strong>Up Cooldown:</strong><span id="key-shift-up-cooldown">{{
+                        car_settings[current_car_id][drive_mode].shift_up_cooldown }}</span></div>
+                <div class="col"><strong>Car ID:</strong><span id="current-car-id">{{ current_car_id }}</span></div>
+            </div>
+        </div>
+        <canvas id="chargeNeedle" width="590" height="590"></canvas>
+        <canvas id="speedNeedle" width="590" height="590"></canvas>
+    </div>
+    <script>
+        let chargeNeedleConfig = {
+            lineWidth: 5,
+            needleLength: 255,
+            circleRadius: 130,
+            offsetX: 0,
+            offsetY: 0,
+            gradientStartColor: "rgba(0, 0, 0, 1)",
+            gradientEndColor: "rgba(255, 255, 255, 1)"
+        };
+
+        let speedNeedleConfig = {
+            lineWidth: 5,
+            needleLength: 255,
+            circleRadius: 130,
+            offsetX: 0,
+            offsetY: 0,
+            gradientStartColor: "rgba(0, 0, 0, 1)",
+            gradientEndColor: "rgba(255, 255, 255, 1)"
+        };
+
+        function drawNeedle(canvasId, value, maxValue, config) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext("2d");
+            const dpr = window.devicePixelRatio || 1;
+            if (canvas.width !== canvas.offsetWidth * dpr) {
+                canvas.width = canvas.offsetWidth * dpr;
+                canvas.height = canvas.offsetHeight * dpr;
+                ctx.scale(dpr, dpr);
+            }
+
+            const width = canvas.offsetWidth;
+            const height = canvas.offsetHeight;
+            const centerX = width / 2 + config.offsetX;
+            const centerY = height / 2 + config.offsetY;
+            const needleLength = config.needleLength;
+
+            value = Number(value) || 0;
+            maxValue = Number(maxValue) || 1;
+            if (maxValue <= 0) maxValue = 1;
+
+            const startAngle = Math.PI * 0.75;
+            const angleRange = Math.PI * 1.5;
+            const angle = startAngle + (angleRange * (value / maxValue));
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.beginPath();
+            ctx.moveTo(centerX, centerY);
+            const endX = centerX + needleLength * Math.cos(angle);
+            const endY = centerY + needleLength * Math.sin(angle);
+            ctx.lineTo(endX, endY);
+
+            const gradient = ctx.createLinearGradient(centerX, centerY, endX, endY);
+            gradient.addColorStop(0, config.gradientStartColor);
+            gradient.addColorStop(1, config.gradientEndColor);
+            ctx.lineWidth = config.lineWidth;
+            ctx.strokeStyle = gradient;
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, config.circleRadius, 0, Math.PI * 2);
+            ctx.fillStyle = "black";
+            ctx.fill();
+        }
+
+        let lastTelemetry = null;
+        let currentChargeValue = 0;
+        let currentSpeedValue = 0;
+        let targetChargeValue = 0;
+        let targetSpeedValue = 0;
+        let chargeVelocity = 0;  // Prędkość wskazówki obrotomierza
+        let speedVelocity = 0;   // Prędkość wskazówki prędkościomierza
+        let lastTime = performance.now();
+        let lastDataTime = performance.now();
+
+        // Parametry sprężyny
+        const springStiffness = 300;  // Sztywność sprężyny (im wyższa, tym szybszy ruch)
+        const damping = 20;           // Tłumienie (im niższe, tym więcej drgań)
+
+        drawNeedle("chargeNeedle", currentChargeValue, 8000, chargeNeedleConfig);
+        drawNeedle("speedNeedle", currentSpeedValue, 320, speedNeedleConfig);
+
+        const socket = io('http://localhost:5000', {
+            pingInterval: 1000,
+            pingTimeout: 500
+        });
+
+        socket.on('connect', function () {
+            console.log('Connected to WebSocket');
+        });
+
+        socket.on('telemetry_update', function (data) {
+            const now = performance.now();
+            console.log(`WebSocket Telemetry - RPM: ${data.CurrentRPM}, Speed: ${data.Speed}, Time: ${now.toFixed(0)}`);
+
+            if (Object.keys(data).length > 0) {
+                lastTelemetry = data;
+                lastDataTime = now;
+
+                targetChargeValue = data.CurrentRPM || 0;
+                targetSpeedValue = data.Speed || 0;
+
+                document.getElementById("key-speed").textContent = Math.round(data.Speed || 0);
+                const gearPrefix = data.drive_mode === 1 ? 'E' : data.drive_mode === 2 ? 'D' : data.drive_mode === 3 ? 'S' : data.drive_mode === 4 ? 'M' : 'S';
+                const gearDisplay = data.Gear === -1 ? 'R' : data.Gear || 0;
+                document.getElementById("key-gear").innerHTML = `<span class="drive-modes">${gearPrefix}</span>${gearDisplay}`;
+                document.getElementById("tire-fl").textContent = `${Math.round(data.TireTempFL || 0)}°C`;
+                document.getElementById("tire-fr").textContent = `${Math.round(data.TireTempFR || 0)}°C`;
+                document.getElementById("tire-rl").textContent = `${Math.round(data.TireTempRL || 0)}°C`;
+                document.getElementById("tire-rr").textContent = `${Math.round(data.TireTempRR || 0)}°C`;
+                document.getElementById("key-drive-mode").textContent = data.drive_mode || 2;
+                document.getElementById("key-shift-down").textContent = data.shift_down || 0;
+                document.getElementById("key-shift-down-cooldown").textContent = data.shift_down_cooldown || 0;
+                document.getElementById("key-shift-up").textContent = data.shift_up || 0;
+                document.getElementById("key-shift-up-cooldown").textContent = data.shift_up_cooldown || 0;
+                document.getElementById("current-car-id").textContent = data.current_car_id || 'N/A';
+            }
+        });
+
+        function animateNeedles(timestamp) {
+            const deltaTime = Math.min((timestamp - lastTime) / 1000, 0.1);  // Czas w sekundach
+            lastTime = timestamp;
+
+            // Symulacja sprężyny dla obrotomierza
+            const chargeAcceleration = springStiffness * (targetChargeValue - currentChargeValue) - damping * chargeVelocity;
+            chargeVelocity += chargeAcceleration * deltaTime;
+            currentChargeValue += chargeVelocity * deltaTime;
+
+            // Symulacja sprężyny dla prędkościomierza
+            const speedAcceleration = springStiffness * (targetSpeedValue - currentSpeedValue) - damping * speedVelocity;
+            speedVelocity += speedAcceleration * deltaTime;
+            currentSpeedValue += speedVelocity * deltaTime;
+
+            // Rysowanie wskazówek
+            drawNeedle("chargeNeedle", currentChargeValue, lastTelemetry?.MaxRPM || 8000, chargeNeedleConfig);
+            drawNeedle("speedNeedle", currentSpeedValue, 320, speedNeedleConfig);
+
+            // Reset wartości, jeśli brak danych przez 1 sekundę
+            if (timestamp - lastDataTime > 1000) {
+                targetChargeValue = 0;
+                targetSpeedValue = 0;
+            }
+
+            requestAnimationFrame(animateNeedles);
+        }
+
+        requestAnimationFrame(animateNeedles);
+    </script>
+</body>
+
+</html>

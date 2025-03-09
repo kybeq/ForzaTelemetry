@@ -1,0 +1,96 @@
+def shift_gear(current_rpm, current_gear, drive_mode_settings, last_shift_time, current_time, throttle, brake, idle_rpm, max_rpm, throttle_prev):
+    """
+    Funkcja odpowiedzialna za automatyczną zmianę biegów na podstawie obrotów silnika (RPM),
+    aktualnego biegu, ustawień trybu jazdy, throttle, brake i zakresu RPM.
+    """
+    global drive_mode, previous_drive_mode, last_significant_speed_change, kickdown_active, last_throttle_drop_time
+
+    # Walidacja RPM
+    if not (idle_rpm <= current_rpm <= max_rpm):
+        logger.warning(f"Nieprawidłowe RPM: {current_rpm} (Idle: {idle_rpm}, Max: {max_rpm})")
+        return None, None
+
+    shift_up_rpm = drive_mode_settings["shift_up"]
+    shift_down_rpm = drive_mode_settings["shift_down"]
+    shift_up_cooldown = drive_mode_settings["shift_up_cooldown"]
+    shift_down_cooldown = drive_mode_settings["shift_down_cooldown"]
+    min_kickdown_rpm = drive_mode_settings.get("min_kickdown_rpm", 1500)
+
+    with telemetry_lock:  # Synchronizacja wszystkich zmian
+        # Automatyczne przełączenie na tryb Sport
+        if throttle > 90 or brake > 90:
+            if drive_mode != 3:
+                previous_drive_mode = drive_mode
+                drive_mode = 3
+                logger.info(f"Automatyczne przełączenie na tryb Sport (3) przy throttle={throttle}, brake={brake}")
+            last_significant_speed_change = current_time
+            last_throttle_drop_time = None
+
+        # Kickdown
+        if (throttle > 80 and throttle_prev <= 80 and current_gear > 1 and 
+            current_rpm > min_kickdown_rpm and current_rpm < shift_down_rpm and not kickdown_active):
+            if current_time - last_shift_time >= shift_down_cooldown:
+                new_gear = current_gear - 1
+                try:
+                    pyautogui.press('q')
+                    logger.info(f"Kickdown: Redukcja biegu: {current_gear} -> {new_gear} przy {current_rpm} RPM")
+                    kickdown_active = True
+                    return new_gear, current_time
+                except pyautogui.PyAutoGUIException as e:
+                    logger.error(f"Błąd pyautogui przy kickdownie: {e}")
+                    return None, None
+            return None, None
+
+        # Reset kickdownu
+        if throttle <= 80:
+            kickdown_active = False
+
+        # Zmiana w górę
+        if current_rpm >= shift_up_rpm and current_gear < 10 and throttle > 0:
+            if current_time - last_shift_time >= shift_up_cooldown:
+                new_gear = current_gear + 1
+                try:
+                    pyautogui.press('e')
+                    logger.info(f"Zmiana biegu w górę: {current_gear} -> {new_gear} przy {current_rpm} RPM")
+                    return new_gear, current_time
+                except pyautogui.PyAutoGUIException as e:
+                    logger.error(f"Błąd pyautogui przy zmianie w górę: {e}")
+                    return None, None
+
+        # Redukcja przy hamowaniu
+        elif brake > 80 and current_gear > 1:
+            if current_time - last_shift_time >= shift_down_cooldown:
+                new_gear = current_gear - 1
+                try:
+                    pyautogui.press('q')
+                    logger.info(f"Redukcja przy hamowaniu: {current_gear} -> {new_gear} przy {current_rpm} RPM")
+                    return new_gear, current_time
+                except pyautogui.PyAutoGUIException as e:
+                    logger.error(f"Błąd pyautogui przy redukcji (hamowanie): {e}")
+                    return None, None
+
+        # Normalna redukcja
+        elif current_rpm < shift_down_rpm and current_gear > 1 and brake <= 80 and throttle <= 80:
+            if current_time - last_shift_time >= shift_down_cooldown:
+                new_gear = current_gear - 1
+                try:
+                    pyautogui.press('q')
+                    logger.info(f"Normalna redukcja: {current_gear} -> {new_gear} przy {current_rpm} RPM")
+                    return new_gear, current_time
+                except pyautogui.PyAutoGUIException as e:
+                    logger.error(f"Błąd pyautogui przy normalnej redukcji: {e}")
+                    return None, None
+
+        # Start z neutralnego
+        elif current_gear == 0 and throttle > 0 and current_rpm > shift_down_rpm:
+            if current_time - last_shift_time >= shift_up_cooldown:
+                new_gear = 1
+                try:
+                    pyautogui.press('e')
+                    logger.info(f"Start z neutralnego: {current_gear} -> {new_gear} przy {current_rpm} RPM")
+                    return new_gear, current_time
+                except pyautogui.PyAutoGUIException as e:
+                    logger.error(f"Błąd pyautogui przy starcie z neutralnego: {e}")
+                    return None, None
+
+    return None, None
