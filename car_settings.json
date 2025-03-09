@@ -18,16 +18,16 @@
             "shift_up_cooldown": 0.3,
             "shift_down_cooldown": 0.3
         },
+        "long_term_distance": 0.0,
+        "current_range": 10000.0,
+        "remaining_fuel": 50.0,
+        "last_traveled_distance": 0.0,
         "4": {
             "shift_up": 0,
             "shift_down": 0,
             "shift_up_cooldown": 0,
             "shift_down_cooldown": 0
         },
-        "long_term_distance": 0.0,
-        "current_range": 10000.0,
-        "remaining_fuel": 50.0,
-        "last_traveled_distance": 0.0,
         "1": {
             "shift_up": 3390,
             "shift_down": 1450,
@@ -117,7 +117,7 @@
         "2": {
             "shift_up": 3890,
             "shift_down": 2360,
-            "shift_up_cooldown": 1.4,
+            "shift_up_cooldown": 1.5,
             "shift_down_cooldown": 0.8
         },
         "3": {
@@ -130,6 +130,12 @@
         "current_range": 422,
         "remaining_fuel": 48.353846836827934,
         "last_traveled_distance": 15.909326430958131,
+        "4": {
+            "shift_up": 0,
+            "shift_down": 0,
+            "shift_up_cooldown": 0,
+            "shift_down_cooldown": 0
+        },
         "1": {
             "shift_up": 3390,
             "shift_down": 1450,
@@ -180,9 +186,57 @@
             "shift_up_cooldown": 0,
             "shift_down_cooldown": 0
         },
-        "long_term_distance": 1.9705837392155638,
-        "current_range": 490,
-        "remaining_fuel": 49.843855686728574,
-        "last_traveled_distance": 1.9705837392155638
+        "long_term_distance": 4.499167550251928,
+        "current_range": 475,
+        "remaining_fuel": 49.60563633996819,
+        "last_traveled_distance": 4.499167550251928,
+        "1": {
+            "shift_up": 3390,
+            "shift_down": 1450,
+            "shift_up_cooldown": 0.8,
+            "shift_down_cooldown": 0.8
+        },
+        "2": {
+            "shift_up": 3890,
+            "shift_down": 2360,
+            "shift_up_cooldown": 1.5,
+            "shift_down_cooldown": 0.8
+        },
+        "3": {
+            "shift_up": 7550,
+            "shift_down": 4559,
+            "shift_up_cooldown": 0.3,
+            "shift_down_cooldown": 0.3
+        },
+        "4": {
+            "shift_up": 0,
+            "shift_down": 0,
+            "shift_up_cooldown": 0,
+            "shift_down_cooldown": 0
+        }
+    },
+    "834": {
+        "1": {
+            "shift_up": 2690,
+            "shift_down": 1450,
+            "shift_up_cooldown": 2.8,
+            "shift_down_cooldown": 1.8
+        },
+        "2": {
+            "shift_up": 3690,
+            "shift_down": 2260,
+            "shift_up_cooldown": 2.4,
+            "shift_down_cooldown": 1.4
+        },
+        "3": {
+            "shift_up": 6300,
+            "shift_down": 3559,
+            "shift_up_cooldown": 0.3,
+            "shift_down_cooldown": 0.3
+        },
+        "long_term_distance": 85.66662725670139,
+        "current_range": 290,
+        "remaining_fuel": 40.91153783706495,
+        "last_traveled_distance": 85.66662725670139
     }
 }
