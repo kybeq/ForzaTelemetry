@@ -1,4 +1,4 @@
-# Telemetria Pojazdu z Dynamicznym Przełączaniem Biegów i Zegarem Virtual Cockpit
+# Telemetria Pojazdu z Dynamiczną Skrzynią Biegów (z tybrami jazdy ECO, NORMAL, SPORT, MANUAL) i Zegarem Virtual Cockpit
 
 To repozytorium zawiera kompletny **prototyp systemu telemetrycznego** do symulacji pojazdu, z zaawansowanym zarządzaniem biegami, monitorowaniem wydajności, zużycia paliwa, oraz z nowoczesnym zegarem w stylu **Virtual Cockpit** inspirowanym rozwiązaniami Audi. Projekt jest w pełni działający, a jego celem jest odwzorowanie zaawansowanego sterowania pojazdem w czasie rzeczywistym, integrującego dane telemetryczne z różnych źródeł.
 
