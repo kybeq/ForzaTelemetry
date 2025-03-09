@@ -2,7 +2,7 @@
 
 To repozytorium zawiera kompletny **prototyp systemu telemetrycznego** do symulacji pojazdu, z zaawansowanym zarządzaniem biegami, monitorowaniem wydajności, zużycia paliwa, oraz z nowoczesnym zegarem w stylu **Virtual Cockpit** inspirowanym rozwiązaniami Audi. Projekt jest w pełni działający, a jego celem jest odwzorowanie zaawansowanego sterowania pojazdem w czasie rzeczywistym, integrującego dane telemetryczne z różnych źródeł.
 
-![Opis obrazu](https://github.com/kybeq/ForzaTelemetry/blob/main/static/new.png)
+![Opis obrazu](https://github.com/kybeq/ForzaTelemetry/blob/main/static/image.png)
 
 ## Kluczowe Funkcje
 
