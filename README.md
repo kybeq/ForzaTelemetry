@@ -1,8 +1,14 @@
 # Telemetria Pojazdu z Dynamiczną Skrzynią Biegów (z tybrami jazdy ECO, NORMAL, SPORT, MANUAL) i Zegarem Virtual Cockpit
 
+**Jeśli masz ochotę na wspólne dopracowanie projektu lub masz pomysły na jego rozwój, nie wahaj się skontaktować!
+Link do Discorda w opisie. 🚗💻**
+
+**If you're interested in collaborating on this project or have ideas for its development, feel free to reach out!
+Discord link in the description. 🚗💻**
+
 To repozytorium zawiera kompletny **prototyp systemu telemetrycznego** do symulacji pojazdu, z zaawansowanym zarządzaniem biegami, monitorowaniem wydajności, zużycia paliwa, oraz z nowoczesnym zegarem w stylu **Virtual Cockpit** inspirowanym rozwiązaniami Audi. Projekt jest w pełni działający, a jego celem jest odwzorowanie zaawansowanego sterowania pojazdem w czasie rzeczywistym, integrującego dane telemetryczne z różnych źródeł.
 
-![Opis obrazu](https://github.com/kybeq/ForzaTelemetry/blob/main/static/image.png)
+![forzatelemetry-audi-virtual-cockpit](https://github.com/kybeq/ForzaTelemetry/blob/main/static/image.png)
 
 ## Kluczowe Funkcje
 
