@@ -51,11 +51,7 @@ To repozytorium zawiera kompletny **prototyp systemu telemetrycznego** do symula
   - **Wątek telemetryczny**: Odbiera i przetwarza dane telemetryczne w czasie rzeczywistym.
   - **Wątek zapisu ustawień**: Zapisuje ustawienia w tle, nie blokując głównego wątku.
 
-### 6. Zaawansowane Logowanie i Diagnostyka
-- **Logowanie**: System zapisuje zmiany biegów, stan pedałów, zmiany trybów jazdy i inne istotne informacje, które mogą być użyteczne do analizy wydajności pojazdu.
-- **Błędy i aktualizacje**: Logowanie błędów i systemowych aktualizacji pomaga w diagnostyce.
-
-### 7. Zegar VirtualCockpit Wzorowany na Audi
+### 6. Zegar VirtualCockpit Wzorowany na Audi
 - **Implementacja zegara**: Zegar inspirowany cyfrowymi kokpitami Audi, wyświetlający kluczowe dane telemetryczne:
   - **RPM**,
   - **Prędkość**,
@@ -73,15 +69,6 @@ To repozytorium zawiera kompletny **prototyp systemu telemetrycznego** do symula
 - **Funkcja `save_settings_worker`**: Zapisuje ustawienia w tle.
 - **Funkcja `udp_socket`**: Komunikuje się z zewnętrznymi systemami przez UDP.
 - **Implementacja zegara VirtualCockpit**: Wyświetla zegar inspirowany Audi, aktualizując dane w czasie rzeczywistym.
-
-## Zastosowanie
-- **Symulacje pojazdów**: Do tworzenia systemów symulacji pojazdów z analizą danych telemetrycznych.
-- **Integracja z systemami telemetrycznymi**: Możliwość integracji z zewnętrznymi platformami.
-- **Gry wyścigowe i symulatory**: Realistyczne sterowanie pojazdem w grach wyścigowych.
-
-## Zależności
-- Biblioteki do obsługi gniazd UDP oraz wątków w Pythonie.
-- Narzędzia do generowania wizualizacji (np. do implementacji zegara VirtualCockpit).
 
 ## Licencja
 Ten projekt jest dostępny na licencji MIT. Szczegóły w pliku LICENSE.
